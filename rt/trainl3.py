@@ -1,4 +1,4 @@
-from sklearn.grid_search import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 
 import xgboost as xgb
 from sklearn.linear_model import Lasso
@@ -12,11 +12,11 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.svm import SVR
 from sklearn.linear_model import Ridge
 
-from sklearn.cross_validation import cross_val_predict
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import KFold
 from sklearn.base import clone
 
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 from scipy.stats import randint
 from scipy.stats import uniform

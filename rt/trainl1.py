@@ -1,6 +1,6 @@
-from sklearn.cross_validation import cross_val_predict
+from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import mean_absolute_error
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import maxabs_scale
 
 import xgboost as xgb
@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
 
 from sklearn.base import clone
-from sklearn.grid_search import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 
 from scipy.stats import randint
 from scipy.stats import uniform
