@@ -24,11 +24,11 @@ import pickle
 def train_model_l1(X,y,params,model,scale=False,n_jobs=8,cv = None,n_params=20):
     if scale: X = maxabs_scale(X)
     else: X = X.apply(lambda x: pd.to_numeric(x, errors="coerce"))
-
+    njobs=1
     crossv_mod = clone(model)
     ret_mod = clone(model)
 
-    grid = RandomizedSearchCV(model, params,cv=cv,scoring="mean_absolute_error",verbose=0,n_jobs=n_jobs,n_iter=n_params,refit=False)
+    grid = RandomizedSearchCV(model, params, cv=cv,scoring="neg_mean_absolute_error",verbose=0,n_jobs=n_jobs,n_iter=n_params,refit=False)
     grid.fit(X,y)
     cv_pred = cv
     crossv_mod.set_params(**grid.best_params_)

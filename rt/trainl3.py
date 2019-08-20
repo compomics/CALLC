@@ -62,7 +62,7 @@ def train_xgb(X,y,n_jobs=16,cv=None):
        'fit_intercept'  : [True,False]
     }
 
-    grid = GridSearchCV(model, params,cv=cv,scoring='mean_absolute_error',verbose=0,n_jobs=n_jobs,refit=True)
+    grid = GridSearchCV(model, params,cv=cv,scoring='neg_mean_absolute_error',verbose=0,n_jobs=n_jobs,refit=True)
     grid.fit(X,y)
     
     cv_pred = cv

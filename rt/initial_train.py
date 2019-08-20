@@ -203,7 +203,9 @@ def main(infilen="train/retmetfeatures_new.csv"):
 			
 			if len(select_index[n:]) < 10: continue
 
-			cv = KFold(len(train.index),n_folds=10)
+			cv = KFold(n_splits=10,shuffle=True)
+            cv = cv.split(train.index)
+            #len(train.index)
 
 			cv_list = cv_to_fold(cv,len(train.index))
 

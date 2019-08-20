@@ -69,8 +69,10 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
     train = train.replace([np.inf, -np.inf], np.nan)
     train = train.fillna(0.0)
 
-
-    cv = KFold(len(train.index),n_folds=5,shuffle=True,random_state=42)
+    #len(train.index),
+    cv = KFold(n_splits=5,shuffle=True,random_state=42)
+    cv = list(cv.split(train.index))
+    
     cv_list = cv_to_fold(cv,len(train.index))
 
     preds_own = train_l1_func(train,names=[k,k,k,k,k,k,k],adds=[n,n,n,n,n,n,n,n],cv=cv,outfile_modname=outfile_modname,n_jobs=num_jobs)
@@ -129,4 +131,4 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
                 print("Can not remove %s file. You need to remove it manually." % fn)
 
 if __name__ == "__main__":
-    main()
+    make_preds(reference_infile="datasets/aicheler_data_features.csv",pred_infile="datasets/lm_features.csv")
