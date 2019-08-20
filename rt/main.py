@@ -41,6 +41,7 @@ def cv_to_fold(cv,num_ins):
     return(ret_vec)
 
 def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv",k="MASSTRPLAN",outfile="",extra_pred_file="",outfile_modname="",num_jobs=4,GUI_obj=None,ch_size=100000):
+    os.chdir("rt/")
     ref_infile = pd.read_csv(reference_infile)
 
     dict_dtypes = dict(ref_infile.select_dtypes(include=['int']).apply(pd.to_numeric,downcast="integer").dtypes)
