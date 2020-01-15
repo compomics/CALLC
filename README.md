@@ -21,10 +21,10 @@ To install CALLC double click on:
 ![feature_extraction](figs/feature_extraction.png)
 
 3.	Run predictions 
-    a.	Specify the input train set file with features extracted from step one 
-    b.	Specify the dataset to make predictions on from step one 
-    c.	Specify the output file for predictions 
-    d.	Specify the output files for models. If you want to use these models in future for calibration specify it in the folder rt/mods_l1/ 
+    a.	Specify the input train set file with features extracted from step one  
+    b.	Specify the dataset to make predictions on from step one  
+    c.	Specify the output file for predictions  
+    d.	Specify the output files for models. If you want to use these models in future for calibration specify it in the folder rt/mods_l1/  
     e.	Specify the number of threads to use for fitting the model parameters 
 
 ![run_predictions](figs/run_predictions.png)
