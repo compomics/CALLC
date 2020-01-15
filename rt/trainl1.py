@@ -1,3 +1,25 @@
+"""
+Robbin Bouwmeester
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+This code is used to train retention time predictors and store
+predictions from a CV procedure for further analysis.
+
+This project was made possible by MASSTRPLAN. MASSTRPLAN received funding 
+from the Marie Sklodowska-Curie EU Framework for Research and Innovation 
+Horizon 2020, under Grant Agreement No. 675132.
+"""
+
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold
@@ -22,6 +44,33 @@ import pickle
 
 
 def train_model_l1(X,y,params,model,scale=False,n_jobs=8,cv = None,n_params=20):
+    """
+    Train a model for Layer 1
+    
+    Parameters
+    ----------
+    X : pd.DataFrame
+        dataframe with all the features
+    y : pd.Series
+        vector with observed retention times
+    params : dict
+        hyperparameters to test
+    model : object
+        model to be trained
+    n_jobs : int
+        number of threads to spawn
+    cv : list
+        CV to use for hyperparameter optimization and prediction
+    n_params : int
+        number of hyperparameter sets to try
+    
+    Returns
+    -------
+    object
+        prediction model
+	list
+		predictions for the train set based on the CV
+    """
     if scale: X = maxabs_scale(X)
     else: X = X.apply(lambda x: pd.to_numeric(x, errors="coerce"))
     njobs=1
@@ -46,8 +95,35 @@ def train_l1_func(sets,
                   n_params=20,
                   outfile_modname="",
                   n_jobs=8):
+    """
+    Train multiple models for Layer 1
+    
+    Parameters
+    ----------
+    sets : pd.DataFrame
+        matrix with features and observed retention times
+    names : list
+        prefixes to add to each model
+    adds : list
+        add suffixes to add to model names
+    cv : list
+        CV to use for hyperparameter optimization and prediction
+    n_params : int
+        number of hyperparameter sets to try
+    outfile_modname : str
+        prefix for the model name
+    n_jobs : int
+        number of threads to spawn
+    
+    Returns
+    -------
+    pd.DataFrame
+        return dataframe with predictions for the training set
+    """
 
     ret_preds = []
+
+    ################################# LASSO #################################
 
     model = Lasso()
 
@@ -79,7 +155,8 @@ def train_l1_func(sets,
            pickle.dump(model, f)
     
     ret_preds.append(preds)
-    ###################################################################################################
+    
+    ################################# AdaBoost #################################
 
     model = AdaBoostRegressor()
 
@@ -108,8 +185,7 @@ def train_l1_func(sets,
 
     ret_preds.append(preds)
 
-       ###################################################################################################
-
+    ################################# XGBoost #################################
 
     model = xgb.XGBRegressor()
 
@@ -141,7 +217,7 @@ def train_l1_func(sets,
 
     ret_preds.append(preds)
 
-              ###################################################################################################
+    ################################# SVR #################################
 
     model = SVR()
 
@@ -174,7 +250,7 @@ def train_l1_func(sets,
 
     ret_preds.append(preds)
 
-       ###################################################################################################
+    ################################# BRR #################################
 
     model = ARDRegression()
 
@@ -206,7 +282,7 @@ def train_l1_func(sets,
            
     ret_preds.append(preds)
 
-       ###################################################################################################
+    ##################################################################
 
 
     ret_preds = pd.DataFrame(ret_preds).transpose()

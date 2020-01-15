@@ -1,7 +1,42 @@
+"""
+Robbin Bouwmeester
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+This code is used to train retention time predictors and store
+predictions from a CV procedure for further analysis.
+
+This project was made possible by MASSTRPLAN. MASSTRPLAN received funding 
+from the Marie Sklodowska-Curie EU Framework for Research and Innovation 
+Horizon 2020, under Grant Agreement No. 675132.
+"""
+
 from rdkit import Chem
 from getf import getf
 
 def read_lib_identifiers(infile):
+    """
+    Get the identifiers present in the library
+    
+    Parameters
+    ----------
+    infile : str
+        infile name that contains previously analyzed structures to speed up the process
+
+    Returns
+    -------
+    set
+        structures present in the library
+    """
     infile = open(infile)
     identifiers = []
     for line in infile:
@@ -10,7 +45,23 @@ def read_lib_identifiers(infile):
         identifiers.append(line.split(",")[0])
     return(set(identifiers))
 
-def get_feats_lib(infile,extract_list):
+def get_feats_lib(infile,
+                  extract_list):
+    """
+    Get the features for the library to speed up the process
+    
+    Parameters
+    ----------
+    infile : str
+        infile name that contains previously analyzed structures to speed up the process
+    extract_list : list
+        extract certain structures from the library
+
+    Returns
+    -------
+    dict
+        dictionary with molecular descriptors
+    """
     infile = open(infile)
     ret_dict = {}
     unique_smiles = set([j for i,j in extract_list])
@@ -24,9 +75,38 @@ def get_feats_lib(infile,extract_list):
             ret_dict[smiles_to_name[identifier]] = dict(zip(header[1:],split_line))
     return(ret_dict)
 
-def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",outfile_name="lmfeatures.csv",library_file="feats_lib.csv",
-                 id_index=0,mol_index=1,time_index=None,gui_object=None,chunk_size=10000):
+def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
+                 outfile_name="lmfeatures.csv",
+                 library_file="feats_lib.csv",
+                 id_index=0,
+                 mol_index=1,
+                 time_index=None,
+                 gui_object=None,
+                 chunk_size=10000):
+    """
+    Get molecular descriptors for a dataset
+    
+    Parameters
+    ----------
+    infile_name : str
+        infile name that contains the structures (inchi or smiles)
+    outfile_name : str
+        outfile name for structures linked to molecular descriptors
+    library_file : str
+        infile name that contains previously analyzed structures to speed up the process
+    id_index : int
+        index number of identifier
+    mol_index : int
+        index number of the inchi or smiles
+    gui_object : object
+        qt object of the GUI to update the process
+    chunk_size : int
+        number of analytes to analyze
 
+    Returns
+    -------
+
+    """
     outfile = open(outfile_name,"w")
 
     features = []
@@ -91,7 +171,7 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",outfile_nam
         m = Chem.MolFromSmiles(mol_str)
 
         if m == None: 
-            #TODO write error msg
+            # TODO write error msg
             continue
         if mol_str not in lib_identifiers:
             try: fdict = getf(m)

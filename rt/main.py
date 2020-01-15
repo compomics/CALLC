@@ -1,3 +1,25 @@
+"""
+Robbin Bouwmeester
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+This code is used to train retention time predictors and store
+predictions from a CV procedure for further analysis.
+
+This project was made possible by MASSTRPLAN. MASSTRPLAN received funding 
+from the Marie Sklodowska-Curie EU Framework for Research and Innovation 
+Horizon 2020, under Grant Agreement No. 675132.
+"""
+
 import subprocess
 
 from random import shuffle
@@ -16,22 +38,75 @@ from numpy import median
 import os
 
 def move_models(k):
+    """
+    Move models so they will not be used in Layer 1
+    
+    Parameters
+    ----------
+    k : str
+		key name for the models that need to be moved
+
+    Returns
+    -------
+
+    """
     cmd = "mv mods_l1/%s*.pickle mods_l1/temp/" % (k)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
     p.communicate()
 
 
 def remove_models(k,n):
+    """
+    Remove specific models
+    
+    Parameters
+    ----------
+    k : str
+		key name for the models that need to be moved
+	n : str
+		specific numeric identifier for the model to be remove
+
+    Returns
+    -------
+
+    """
     cmd = "rm -rf mods_l1/%s*.pickle" % (k)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
     p.communicate()
 
 def move_models_back(k):
+    """
+    Move models back so they will be used in Layer 1
+    
+    Parameters
+    ----------
+    k : str
+		key name for the models that need to be moved
+
+    Returns
+    -------
+
+    """
     cmd = "mv mods_l1/temp/%s*.pickle mods_l1/" % (k)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
     p.communicate()
 
 def cv_to_fold(cv,num_ins):
+    """
+    Define a CV in a pre-defined list
+    
+    Parameters
+    ----------
+    cv : sklearn.model_selection.KFold
+		cv to be put into the list
+	num_ins : int
+		number of folds
+
+    Returns
+    -------
+	list
+		defined cv
+    """
     ret_vec = [0]*num_ins
     counter_f = 0
     for train,test in cv:
@@ -41,13 +116,43 @@ def cv_to_fold(cv,num_ins):
     return(ret_vec)
 
 def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv",k="MASSTRPLAN",outfile="",extra_pred_file="",outfile_modname="",num_jobs=4,GUI_obj=None,ch_size=100000):
-    os.chdir("rt/")
+    """
+    Make predictions for the evaluation of CALLC
+    
+    Parameters
+    ----------
+    reference_infile : str
+		location of train data
+    pred_infile : str
+        location of file to make predictions for
+    k : str
+        key name to add to predictions and models
+    outfile : str
+        outfile for the predictions
+    outfile_modname : str
+        name for the models it will train
+    num_jobs : int
+        number of threads to spawn
+    GUI_obj : object
+        gui object to update log
+    ch_size : int
+        chunk size for generating predictions
+
+    Returns
+    -------
+
+    """
+    try: os.chdir("rt/")
+    except: pass
+    
     ref_infile = pd.read_csv(reference_infile)
 
+    # Make sure we have the correct data types
     dict_dtypes = dict(ref_infile.select_dtypes(include=['int']).apply(pd.to_numeric,downcast="integer").dtypes)
     float_dtypes = dict(ref_infile.select_dtypes(include=['float']).apply(pd.to_numeric,downcast="float").dtypes)
     dict_dtypes.update(float_dtypes)
 
+    # See if we need to chunk the predictions to be memory efficient
     tot_preds = sum(1 for row in open(pred_infile,"r"))/ch_size
     p_infile = pd.read_csv(pred_infile,dtype=dict_dtypes,chunksize=ch_size)
 
@@ -66,16 +171,18 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
     print("===========")
     print("Total number of train molecules with tR: %s" % (n))
 
+    # Make sure that for the training data we do not have infinite or nan
     train = ref_infile
     train = train.replace([np.inf, -np.inf], np.nan)
     train = train.fillna(0.0)
 
-    #len(train.index),
-    cv = KFold(n_splits=5,shuffle=True,random_state=42)
+    # Define the folds to make predictions
+    cv = KFold(n_splits=10,shuffle=True,random_state=42)
     cv = list(cv.split(train.index))
     
     cv_list = cv_to_fold(cv,len(train.index))
 
+    # Do layer 1 outside of the chunking
     preds_own = train_l1_func(train,names=[k,k,k,k,k,k,k],adds=[n,n,n,n,n,n,n,n],cv=cv,outfile_modname=outfile_modname,n_jobs=num_jobs)
     preds_l1_train,skipped_train = apply_models(train.drop(["time","IDENTIFIER","system"],axis=1, errors='ignore'),known_rt=train["time"],row_identifiers=train["IDENTIFIER"],skip_cont=[k])
     preds_l1_train = pd.concat([preds_l1_train.reset_index(drop=True), preds_own], axis=1)

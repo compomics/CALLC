@@ -1,3 +1,25 @@
+"""
+Robbin Bouwmeester
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+This code is used to train retention time predictors and store
+predictions from a CV procedure for further analysis.
+
+This project was made possible by MASSTRPLAN. MASSTRPLAN received funding 
+from the Marie Sklodowska-Curie EU Framework for Research and Innovation 
+Horizon 2020, under Grant Agreement No. 675132.
+"""
+
 from sklearn.model_selection import RandomizedSearchCV
 
 import xgboost as xgb
@@ -31,7 +53,30 @@ from operator import itemgetter
 from numpy import median
 from collections import Counter
     
-def train_xgb(X,y,n_jobs=16,cv=None):
+def train_en(X,y,n_jobs=16,cv=None):
+    """
+    Function that trains Layer 3 of CALLC (elastic net)
+    
+    Parameters
+    ----------
+    X : pd.DataFrame
+        dataframe with molecular descriptors
+    y : pd.Series
+        vector with observed retention times
+    n_jobs : int
+        number of jobs to spawn
+    cv : sklearn.model_selection.KFold
+        cv object
+    
+    Returns
+    -------
+    sklearn.linear_model.ElasticNet
+        elastic net model trained in Layer 3
+    list
+        list with predictions
+    list
+        list with features used to train Layer 3
+    """
     preds = []
     featuresSE = [feat for feat in list(X) if "RtGAMSE" in feat]
     features = [feat.split("+")[0]+"+RtGAM" for feat in featuresSE]
@@ -77,6 +122,25 @@ def train_xgb(X,y,n_jobs=16,cv=None):
     return(ret_mod,preds,selected_feat)
 
 def train_l3(knowns,unknowns,cv=None):
+    """
+    Wrapper function that trains Layer 3 of CALLC (elastic net)
+    
+    Parameters
+    ----------
+    knowns : pd.DataFrame
+        dataframe with analytes that have known retention times
+    unknowns : pd.DataFrame
+        dataframe with analytes that have unknown retention times
+
+    Returns
+    -------
+    pd.DataFrame
+        dataframe with predictions for the knowns
+    pd.DataFrame
+        dataframe with predictions for the unknowns
+    list
+        list with coefficients trained in Layer 3
+    """
     cols_known = list(knowns.columns)
     
     try: 
@@ -85,7 +149,7 @@ def train_l3(knowns,unknowns,cv=None):
         cols_known.remove("time")
         unknowns = unknowns[cols_known]
 
-    model,preds_train,selected_feat = train_xgb(knowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore'),knowns["time"],cv=cv)
+    model,preds_train,selected_feat = train_en(knowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore'),knowns["time"],cv=cv)
     preds_test = model.predict(unknowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore')[selected_feat])
 
     knowns["preds"] = preds_train
