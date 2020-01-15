@@ -13,11 +13,11 @@ To install CALLC double click on:
 ## Generating predictions
 
 1.	Run CALCC.vbs in the root (main directory)
-2.	Extract features for your train set and prediction set you want to make predictions on. This is the top panel in the user interface.
-    a.	Specify the location of the dataset. Train set has three columns: identifiers, SMILES and the experimentally measured retention time (see input and output files examples section for details). The set to make predictions on (e.g. LIPIDMAPS smiles in the folder rt/datasets/) has two columns: identifiers and SMILES. 
-    b.	Specify a library with the SMILES structure in the first column and following columns contain the features that are extracted. Defining a library can significantly speed up the process of feature extraction when the process was already performed on a part of the dataset. 
-    c.	Define an output file. 
-
+2.	Extract features for your train set and prediction set you want to make predictions on. This is the top panel in the user interface.  
+    a.	Specify the location of the dataset. Train set has three columns: identifiers, SMILES and the experimentally measured retention time (see input and output files examples section for details). The set to make predictions on (e.g. LIPIDMAPS smiles in the folder rt/datasets/) has two columns: identifiers and SMILES.  
+    b.	Specify a library with the SMILES structure in the first column and following columns contain the features that are extracted. Defining a library can significantly speed up the process of feature extraction when the process was already performed on a part of the dataset.  
+    c.	Define an output file.  
+    
 ![feature_extraction](figs/feature_extraction.png)
 
 3.	Run predictions 
@@ -34,21 +34,31 @@ To install CALLC double click on:
 ### Feature extraction examples
 
 Train file:
+
 ![train_file](figs/train_file.png)
 
+
 Prediction file:
+
 ![prediction_file](figs/prediction_file.png)
 
+
 Library file:
+
 ![library_file](figs/library_file.png)
 
 ### Prediction examples
 
 Input file train:
+
 ![input_file_train](figs/input_file_train.png)
 
+
 Input file predictions:
+
 ![input_file_predictions](figs/input_file_predictions.png)
 
+
 Output file predictions:
+
 ![output_file_predictions](figs/output_file_predictions.png)
