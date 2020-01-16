@@ -4,6 +4,10 @@
 
 Installing and running CALLC is very easy. The tool provided was tested on windows and linux platforms, but for linux it is assumed you can install the required packages yourself (see the .yml in the install folder). If you have any further questions, feel free to send your questions to: robbin.bouwmeester@ugent.be
 
+## Video installation and generating predictions
+
+[![callc](http://img.youtube.com/vi/0DTDQ3xx0vU/0.jpg)](http://www.youtube.com/watch?v=0DTDQ3xx0vU "callc")
+
 ## Installation
 
 To install CALLC double click on:
