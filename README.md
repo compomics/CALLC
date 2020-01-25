@@ -10,6 +10,8 @@ Installing and running CALLC is very easy. The tool provided was tested on windo
 
 ## Installation
 
+Unzip CALLC in a path **without** spaces (requirement for dependencies).
+
 To install CALLC double click on:
 
 ```install/install.bat```
