@@ -75,5 +75,5 @@ for (c in colnames(knowns)) {
   knowns[paste(c,"+","RtGAM",sep="")] <- pred_knowns
 }
 
-write.csv(unknowns,"GAMpredTemp.csv",quote=F,row.names=F)
-write.csv(knowns,"GAMtrainTemp.csv",quote=F,row.names=F)
+write.csv(unknowns,"GAMpredTemp.csv",quote=T,row.names=F)
+write.csv(knowns,"GAMtrainTemp.csv",quote=T,row.names=F)
