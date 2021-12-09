@@ -53,6 +53,8 @@ from operator import itemgetter
 from numpy import median
 from collections import Counter
     
+import pandas as pd
+
 def train_en(X,y,n_jobs=16,cv=None):
     """
     Function that trains Layer 3 of CALLC (elastic net)
@@ -78,21 +80,11 @@ def train_en(X,y,n_jobs=16,cv=None):
         list with features used to train Layer 3
     """
     preds = []
-    featuresSE = [feat for feat in list(X) if "RtGAMSE" in feat]
-    features = [feat.split("+")[0]+"+RtGAM" for feat in featuresSE]
-
     index = 0
-    Xse = X[featuresSE]
-    Xfe = X[features]
-
-    selected_feat = [feat for feat in list(X) if feat.endswith("+RtGAM")]
-
 
     model = ElasticNet()
     crossv_mod = clone(model)
     ret_mod = clone(model)
-
-    X = X[selected_feat]
 
     set_reg = [0.01,1.0,10.0,100.0,1000.0,10000.0,10000.0,100000.0,1000000.0,1000000000,1000000]
     set_reg.extend([x/2 for x in set_reg])
@@ -107,6 +99,7 @@ def train_en(X,y,n_jobs=16,cv=None):
        'fit_intercept'  : [True,False]
     }
 
+
     grid = GridSearchCV(model, params,cv=cv,scoring='neg_mean_absolute_error',verbose=0,n_jobs=n_jobs,refit=True)
     grid.fit(X,y)
     
@@ -114,12 +107,14 @@ def train_en(X,y,n_jobs=16,cv=None):
     crossv_mod.set_params(**grid.best_params_)
     preds = cross_val_predict(crossv_mod, X=X, y=y, cv=cv_pred, n_jobs=n_jobs, verbose=0)
 
+    
+
     ret_mod.set_params(**grid.best_params_)
     ret_mod.fit(X,y)
-
+    
     coef_indexes = [i for i,coef in enumerate(ret_mod.coef_) if coef > 0.0]
 
-    return(ret_mod,preds,selected_feat)
+    return(ret_mod,preds)
 
 def train_l3(knowns,unknowns,cv=None):
     """
@@ -142,6 +137,7 @@ def train_l3(knowns,unknowns,cv=None):
         list with coefficients trained in Layer 3
     """
     cols_known = list(knowns.columns)
+    cols_known = [ck for ck in cols_known if ck in unknowns.columns]
     
     try: 
         unknowns = unknowns[cols_known]
@@ -149,8 +145,12 @@ def train_l3(knowns,unknowns,cv=None):
         cols_known.remove("time")
         unknowns = unknowns[cols_known]
 
-    model,preds_train,selected_feat = train_en(knowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore'),knowns["time"],cv=cv)
-    preds_test = model.predict(unknowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore')[selected_feat])
+    all_train_cols = knowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore').columns
+    selected_feat = [feat for feat in list(all_train_cols) if feat.endswith("+RtGAM")]
+    overlap_selected_feat = pd.Series(list(set(selected_feat) & set(unknowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore').columns)))
+
+    model,preds_train = train_en(knowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore')[overlap_selected_feat],knowns["time"],cv=cv)
+    preds_test = model.predict(unknowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore')[overlap_selected_feat])
 
     knowns["preds"] = preds_train
     unknowns["preds"] = preds_test
@@ -158,12 +158,14 @@ def train_l3(knowns,unknowns,cv=None):
     coef_indexes = [i for i,coef in enumerate(model.coef_) if coef > 0.0]
     coefs_list = [(name,model.coef_[i]) for i,name in enumerate(list(unknowns.drop(["time","IDENTIFIER"],axis=1, errors='ignore')[selected_feat])) if i in coef_indexes]
     
+    """
     coefs_tot = 0.0
     for mod_name,coef in coefs_list:
-        if coef > 0.01:
+        if coef > 0.025:
             print("Layer 3 fitted coefficient (%s): %.3f" % (mod_name.rstrip("42+RtGAM"),coef))
             coefs_tot += coef
     print("Layer 3 sum coefficients: %.3f" % (coefs_tot))
+    """
     
     try: return(knowns[["IDENTIFIER","preds","time"]],unknowns[["IDENTIFIER","preds","time"]],coefs_list)
     except: return(knowns[["IDENTIFIER","preds","time"]],unknowns[["IDENTIFIER","preds"]],coefs_list)

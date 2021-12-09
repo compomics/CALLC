@@ -1,15 +1,15 @@
 if (!require("mgcv")) {
-  install.packages("mgcv", dependencies = TRUE)
+  install.packages("mgcv", dependencies = TRUE, repos = "http://cran.us.r-project.org")
   library(mgcv)
 }
 
-if (!require("doMC")) {
-  install.packages("doMC", repos="http://R-Forge.R-project.org")
-  library(doMC)
-}
+#if (!require("doMC")) {
+#  install.packages("doMC", dependencies = TRUE, repos="http://R-Forge.R-project.org")
+#  library(doMC)
+#}
 
 if (!require("doParallel")) {
-  install.packages("doParallel", dependencies = TRUE)
+  install.packages("doParallel", dependencies = TRUE, repos = "http://cran.us.r-project.org")
   library(doParallel)
 }
 

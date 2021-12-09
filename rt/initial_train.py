@@ -194,6 +194,8 @@ def main(infilen="train/retmetfeatures_new.csv"):
 
 	sets = get_sets(infile)
 
+	infile["IDENTIFIER"] = ["mol_"+str(i) for i in range(len(infile["IDENTIFIER"]))]
+
 	#duplic_df = pd.read_csv("train/retmetfeatures_new.csv")
 	#unique_df = pd.read_csv("train/retmetfeatures_new_nodup.csv")
 

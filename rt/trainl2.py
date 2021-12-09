@@ -44,7 +44,7 @@ def call_ghostbusters(infile_known="temp/tempKnownsl2.csv",infile_unknown="temp/
 		train predictions
     """
     cmd = "Rscript makeGAM.R %s %s %s" % (infile_known,infile_unknown,fold_list)
-    
+    print("Executing: ",cmd)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
     out, err = p.communicate()
     
@@ -81,6 +81,11 @@ def apply_l2(known_all,unknown_all,name="cake",ignore_cols=["IDENTIFIER","time"]
     
     known_all.index = known_all["IDENTIFIER"]
     unknown_all.index = unknown_all["IDENTIFIER"]
+
+    print(known_all)
+    input("stop")
+    print(unknown_all)
+    input("stop2")
 
     infile_known_handle = open("temp/tempKnownsl2.csv","w")
     infile_unknown_handle = open("temp/tempUnknownsl2.csv","w")

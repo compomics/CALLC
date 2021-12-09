@@ -26,7 +26,14 @@ import pickle
 import pandas
 from sklearn.preprocessing import maxabs_scale
 
-def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=[],skip_cont=[]):
+try:
+    import copy_reg
+except:
+    import copyreg as copy_reg
+
+import copyreg as copy_reg
+
+def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=[],skip_cont=[],additional_models=[]):
     """
     Apply the models from Layer 1
     
@@ -52,7 +59,11 @@ def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=
 	list
 		list with skipped models
     """
-    model_fn = [f for f in listdir(model_path) if isfile(join(model_path, f))]
+    model_fn = [join(model_path,f) for f in listdir(model_path) if isfile(join(model_path, f))]
+ 
+    if len(additional_models) > 0:
+        model_fn.extend(additional_models)
+
     preds = []
     t_preds = []
     skipped = []
@@ -74,22 +85,25 @@ def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=
                 skipped.append(f.replace(".pickle",""))
                 con = True
         if con: continue
-        print("Applying model: %s" % (join(model_path, f)))
-        with open(join(model_path, f),"rb") as model_f:
+        print("Applying model: %s" % (f))
+        with open(f,"rb") as model_f:
             try: model = pickle.load(model_f,encoding='latin1')
-            except: print("Unable to load: %s" % (model_f))
-        if "_SVM" in f:
-            X_temp = maxabs_scale(X)
-            preds.append(model.predict(X_temp))
-            cnames.append(f.replace(".pickle",""))
-            continue
+            except Exception as e:
+                print("Unable to load: %s" % (model_f))
+                print(e)
+                continue
         try: 
             temp_preds = model.predict(X)
-        except:
-            print("Could not execute: %s" % (join(model_path, f)))
-            continue
+        except Exception as e:
+            try:
+                del model.enable_categorical
+                temp_preds = model.predict(X)
+            except Exception as e2:
+                print("Could not execute: %s" % (join(model_path, f)))
+                print(e)
+                continue
         preds.append(temp_preds)
-        cnames.append(f.replace(".pickle",""))
+        cnames.append(f.split("/")[-1].replace(".pickle",""))
 
     preds = zip(*preds)
     preds = list(map(list,preds))

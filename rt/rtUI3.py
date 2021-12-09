@@ -7,7 +7,6 @@ from functools import partial
 import os
 import sys
 
-
 from moldescriptors import get_features
 from main import make_preds
 

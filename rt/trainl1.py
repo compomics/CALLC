@@ -42,7 +42,6 @@ import pandas as pd
 
 import pickle
 
-
 def train_model_l1(X,y,params,model,scale=False,n_jobs=8,cv = None,n_params=20):
     """
     Train a model for Layer 1
@@ -92,7 +91,7 @@ def train_l1_func(sets,
                   names=["Cake.lie","Cake.lie1","Cake.lie2","Cake.lie3","Cake.lie4","Cake.lie5"],
                   adds=["","","","","","","",""],
                   cv = None,
-                  n_params=20,
+                  n_params=2,
                   outfile_modname="",
                   n_jobs=8):
     """
@@ -147,7 +146,7 @@ def train_l1_func(sets,
         outfile.write("%s,%s,%s\n" % val)
     outfile.close()
 
-    with open("mods_l1/%s_lasso.pickle" % (names[0]), "wb") as f:
+    with open("temp/%s_lasso.pickle" % (names[0]), "wb") as f:
            pickle.dump(model, f)
     
     if len(outfile_modname) > 0:
@@ -176,7 +175,7 @@ def train_l1_func(sets,
         outfile.write("%s,%s,%s\n" % val)
     outfile.close()
 
-    with open("mods_l1/%s_adaboost.pickle" % (names[1]), "wb") as f:
+    with open("temp/%s_adaboost.pickle" % (names[1]), "wb") as f:
            pickle.dump(model, f)
            
     if len(outfile_modname) > 0:
@@ -208,7 +207,7 @@ def train_l1_func(sets,
         outfile.write("%s,%s,%s\n" % val)
     outfile.close()
 
-    with open("mods_l1/%s_xgb.pickle" % (names[2]), "wb") as f:
+    with open("temp/%s_xgb.pickle" % (names[2]), "wb") as f:
            pickle.dump(model, f)
            
     if len(outfile_modname) > 0:
@@ -241,45 +240,13 @@ def train_l1_func(sets,
         outfile.write("%s,%s,%s\n" % val)
     outfile.close()
 
-    with open("mods_l1/%s_SVM.pickle" % (names[3]), "wb") as f: 
+    with open("temp/%s_SVM.pickle" % (names[3]), "wb") as f: 
            pickle.dump(model, f)
            
     if len(outfile_modname) > 0:
         with open("%s_SVM.pickle" % (outfile_modname), "wb") as f:
            pickle.dump(model, f)
 
-    ret_preds.append(preds)
-
-    ################################# BRR #################################
-
-    model = ARDRegression()
-
-    params = {
-        "n_iter" : randint(100,1500),
-        "alpha_1" : uniform(1e-10,1e-2),
-        "lambda_1" : uniform(1e-10,1e-2),
-        "threshold_lambda" : randint(1,10000),
-    }
-    
-    print("Training Layer 1 BRR")
-    model,preds = train_model_l1(sets.drop(["time","IDENTIFIER","system"],axis=1, errors="ignore"),
-                                             sets["time"],params,model,
-                                             cv = cv,n_params=n_params,
-                                             n_jobs=n_jobs)
-
-    outfile = open("preds_l1/%s_bayesianregr%s.txt" % (names[6],adds[6]),"w")
-    for val in zip(list(sets["IDENTIFIER"]),list(sets["time"]),preds):
-        outfile.write("%s,%s,%s\n" % val)
-    outfile.close()
-
-
-    with open("mods_l1/%s_brr.pickle" % (names[6]), "wb") as f:
-           pickle.dump(model, f)
-
-    if len(outfile_modname) > 0:
-        with open("%s_brr.pickle" % (outfile_modname), "wb") as f:
-           pickle.dump(model, f)
-           
     ret_preds.append(preds)
 
     ##################################################################
@@ -291,10 +258,10 @@ def train_l1_func(sets,
     ret_preds.columns = ["%s_lasso" % (names[0]),
                          "%s_adaboost"  % (names[1]),
                          "%s_xgb" % (names[2]),
-                         "%s_SVM" % (names[3]),
-                         "%s_brr"  % (names[4])]
+                         "%s_SVM" % (names[3])
+                         ]
 
-    return(ret_preds)
+    return ret_preds, ["temp/%s_SVM.pickle" % (names[3]),"temp/%s_xgb.pickle" % (names[2]),"temp/%s_adaboost.pickle" % (names[1]),"temp/%s_lasso.pickle" % (names[0])]
 
 
     

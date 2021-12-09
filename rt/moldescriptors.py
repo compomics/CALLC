@@ -22,6 +22,8 @@ Horizon 2020, under Grant Agreement No. 675132.
 
 from rdkit import Chem
 from getf import getf
+import pandas as pd
+from rdkit.Chem.inchi import MolFromInchi
 
 def read_lib_identifiers(infile):
     """
@@ -82,6 +84,7 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
                  mol_index=1,
                  time_index=None,
                  gui_object=None,
+                 return_df=False,
                  chunk_size=10000):
     """
     Get molecular descriptors for a dataset
@@ -121,10 +124,15 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
     if len(library_file.strip()) > 0: lib_identifiers = read_lib_identifiers(library_file)
     else: lib_identifiers = set()
 
-    mols = open(infile_name)
+    if type(infile_name) == str:
+        mols = open(infile_name)
+    else:
+        mols = infile_name
 
     
     for mol in mols:
+        mol = mol.decode("utf-8")
+        print(mol)
         counter += 1
 
         if gui_object:
@@ -151,15 +159,21 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
                     outfile.write("%s" % (time_dict[identifier]))
                 else: outfile.write("%s" % (identifier))
                 for f in features:
-                    outfile.write(",%s" % (lipid_dict[identifier][f]))
+                    try:
+                        outfile.write(",%s" % (lipid_dict[identifier][f]))
+                    except:
+                        pass
                 outfile.write("\n")
             #outfile.close()
             library_analyze_smiles = []
             lipid_dict = {}
             time_dict = {}
 
-        if "\t" in mol: mol = mol.strip().split("\t")
-        else: mol = mol.strip().split(",")
+        if "\t" in mol:
+            mol = mol.strip().split("\t")
+            print(mol)
+        else:
+            mol = mol.strip().split(",")
 
         identifier = mol[id_index]
         mol_str = mol[mol_index]
@@ -169,6 +183,8 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
             time_dict[identifier] = rt
 
         m = Chem.MolFromSmiles(mol_str)
+        if m == None:
+            m = MolFromInchi(mol_str)
 
         if m == None: 
             # TODO write error msg
@@ -180,13 +196,21 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
             if len(features) == 0: features = list(set(lipid_dict[identifier].keys()))
         else:
             library_analyze_smiles.append([identifier,mol_str])
+
+        if return_df:
+            lipid_dict[identifier]["IDENTIFIER"] = identifier
+            try:
+                lipid_dict[identifier]["time"] = time_dict[identifier]
+            except:
+                lipid_dict[identifier]["time"] = 0.0
     
     if len(library_analyze_smiles) > 0: 
         lib_dict = get_feats_lib(library_file,library_analyze_smiles)
         lipid_dict.update(lib_dict)
 
     if len(features) == 0:
-        features = list(lipid_dict[list(lipid_dict.keys())[0]].keys())
+        try: features = list(lipid_dict[list(lipid_dict.keys())[0]].keys())
+        except: features = []
 
     if write_header:
         if time_index: outfile.write("IDENTIFIER,time,%s\n" % (",".join(features)))
@@ -196,14 +220,24 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
     for identifier in lipid_dict.keys():
         
         if time_index:
-            outfile.write("%s," % (identifier))
-            outfile.write("%s" % (time_dict[identifier]))
+            try:
+                outfile.write("%s," % (identifier))
+                outfile.write("%s" % (time_dict[identifier]))
+            except:
+                pass
 
         else: outfile.write("%s" % (identifier))
         for f in features:
-            outfile.write(",%s" % (lipid_dict[identifier][f]))
+            try:
+                outfile.write(",%s" % (lipid_dict[identifier][f]))
+            except:
+                pass
         outfile.write("\n")
     outfile.close()
+
+    if return_df:
+        
+        return pd.DataFrame(lipid_dict).T
 
 
 if __name__ == "__main__":
