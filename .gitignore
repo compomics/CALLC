@@ -1,1 +1,6 @@
 .DS_Store
+/rt/datasets/input_for_scaler.csv
+
+# Editor directories and files
+.idea
+.vscode

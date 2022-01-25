@@ -11,7 +11,8 @@ COPY --from=build /venv /venv
 ENV VIRTUAL_ENV=/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY rt /callc
-RUN chmod 777 /callc/temp
+RUN mkdir /callc/temp
+RUN mkdir /callc/preds_l1
 RUN pip install joblib==1.0 mordred==1.2 networkx==2.6 scikit-learn==0.24 scipy==1.7 streamlit>=0.88 threadpoolctl==2.2 \
     xgboost==1.4 plotly==5.3 pygam \
     PyQt5>=5 typing-extensions==4 statsmodels
