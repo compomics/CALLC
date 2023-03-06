@@ -33,9 +33,11 @@ import numpy as np
 
 from io import StringIO
 
+from tqdm import tqdm
+
 def get_feats(data_df: pd.DataFrame,
               RDKit_r: bool = True,
-              cdk: bool     = True,
+              cdk: bool     = False,
               mordred: bool = True) -> pd.DataFrame:
     """
     Function to get features (chemical descriptors and chemical class)
@@ -70,8 +72,8 @@ def get_feats(data_df: pd.DataFrame,
     idents = []
     mols = []
 
-    for row_index, row in data_df.iterrows():
-        print(row)
+    print("Reading data:")
+    for row_index, row in tqdm(data_df.iterrows()):
         inchi_code, _ = list(row[["inchi", "index"]])
 
         # InCHI is empty... so skip
@@ -111,7 +113,8 @@ def get_feats(data_df: pd.DataFrame,
     mol_desc = {}
     if RDKit_r:
         mol_desc_rdkit = getf(mols,progs=["rdkit"])["rdkit"]
-        for k in mol_desc_rdkit.keys():
+        print("Running rdkit:")
+        for k in tqdm(mol_desc_rdkit.keys()):
             try:
                 mol_desc[k].update(mol_desc_rdkit[k])
             except:
@@ -119,7 +122,8 @@ def get_feats(data_df: pd.DataFrame,
                 mol_desc[k].update(mol_desc_rdkit[k])
     if mordred:
         mol_desc_mordred = getf(mols,progs=["mordred"])["mordred"]
-        for k in mol_desc_mordred.keys():
+        print("Running mordred:")
+        for k in tqdm(mol_desc_mordred.keys()):
             try:
                 mol_desc[k].update(mol_desc_mordred[k])
             except:
@@ -158,12 +162,11 @@ def get_feats(data_df: pd.DataFrame,
                     try:
                         v = float(v)
                     except:
-                        print("ja")
                         continue
                     if type(v) == float or type(v) == int:
                         feat_dict[ident][k] = mol_desc[str(i)][k]
                     else:
-                        print("nee")
+                        pass
             except KeyError:
                 pass
         feat_dict[ident]["IDENTIFIER"] = data_df.iloc[int(ident.split("|")[0]),:]["IDENTIFIER"]

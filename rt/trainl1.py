@@ -76,7 +76,7 @@ def train_model_l1(X,y,params,model,scale=False,n_jobs=8,cv = None,n_params=20):
     crossv_mod = clone(model)
     ret_mod = clone(model)
 
-    grid = RandomizedSearchCV(model, params, cv=cv,scoring="neg_mean_absolute_error",verbose=0,n_jobs=n_jobs,n_iter=n_params,refit=False)
+    grid = RandomizedSearchCV(model, params, cv=cv,scoring="neg_mean_absolute_error",verbose=100,n_jobs=n_jobs,n_iter=n_params,refit=False)
     grid.fit(X,y)
     cv_pred = cv
     crossv_mod.set_params(**grid.best_params_)
@@ -91,7 +91,7 @@ def train_l1_func(sets,
                   names=["Cake.lie","Cake.lie1","Cake.lie2","Cake.lie3","Cake.lie4","Cake.lie5"],
                   adds=["","","","","","","",""],
                   cv = None,
-                  n_params=2,
+                  n_params=5,
                   outfile_modname="",
                   n_jobs=8):
     """
@@ -121,6 +121,7 @@ def train_l1_func(sets,
     """
 
     ret_preds = []
+    #sets = sets.T.drop_duplicates().T
 
     ################################# LASSO #################################
 
@@ -134,7 +135,7 @@ def train_l1_func(sets,
         "precompute" : [True,False],
         "max_iter" : [500]
     }
-    
+
     print("Training Layer 1 LASSO")
     model,preds = train_model_l1(sets.drop(["time","IDENTIFIER","system"],axis=1, errors="ignore"),
                                              sets["time"],params,model,
@@ -164,7 +165,6 @@ def train_l1_func(sets,
            "learning_rate": uniform(0.01,0.5)
     }
 
-    print("Training Layer 1 AdaBoost")
     model,preds = train_model_l1(sets.drop(["time","IDENTIFIER","system"],axis=1, errors="ignore"),
                                              sets["time"],params,model,
                                              cv = cv,n_params=n_params,
@@ -197,7 +197,8 @@ def train_l1_func(sets,
         "reg_lambda" : uniform(0.0,10.0)
     }
     
-    print("Training Layer 1 XGBoost")    
+
+    print("Training Layer 1 XGBoost")
     model,preds = train_model_l1(sets.drop(["time","IDENTIFIER","system"],axis=1, errors="ignore"),
                                              sets["time"],params,model,
                                              n_jobs=1,cv = cv,n_params=n_params)
@@ -209,7 +210,7 @@ def train_l1_func(sets,
 
     with open("temp/%s_xgb.pickle" % (names[2]), "wb") as f:
            pickle.dump(model, f)
-           
+
     if len(outfile_modname) > 0:
         with open("%s_xgb.pickle" % (outfile_modname), "wb") as f:
            pickle.dump(model, f)

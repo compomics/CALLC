@@ -25,7 +25,7 @@ from os.path import isfile, join
 import pickle
 import pandas
 from sklearn.preprocessing import maxabs_scale
-
+import xgboost as xgb
 try:
     import copy_reg
 except:
@@ -86,12 +86,22 @@ def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=
                 con = True
         if con: continue
         print("Applying model: %s" % (f))
-        with open(f,"rb") as model_f:
-            try: model = pickle.load(model_f,encoding='latin1')
-            except Exception as e:
-                print("Unable to load: %s" % (model_f))
-                print(e)
+        if f.endswith(".pickle"):
+            with open(f,"rb") as model_f:
+                try: model = pickle.load(model_f,encoding='latin1')
+                except Exception as e:
+                    print("Unable to load: %s" % (model_f))
+                    print(e)
+                    continue
+        elif f.endswith(".json"):
+            try:
+                model = xgb.Booster()
+                model.load_model(f)
+            except:
                 continue
+        else:
+            continue
+
         try: 
             temp_preds = model.predict(X)
         except Exception as e:
@@ -103,7 +113,7 @@ def apply_models(X,outfile="",model_path="mods_l1/",known_rt=[],row_identifiers=
                 print(e)
                 continue
         preds.append(temp_preds)
-        cnames.append(f.split("/")[-1].replace(".pickle",""))
+        cnames.append(f.split("/")[-1].replace(".pickle","").replace(".json",""))
 
     preds = zip(*preds)
     preds = list(map(list,preds))

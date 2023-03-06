@@ -56,7 +56,7 @@ def call_ghostbusters(infile_known="temp/tempKnownsl2.csv",infile_unknown="temp/
 
     return(preds,train_preds)
 
-def apply_l2(known_all,unknown_all,name="cake",ignore_cols=["IDENTIFIER","time"],cv_list=None,min_cor=0.75):
+def apply_l2(known_all,unknown_all,name="cake",ignore_cols=["IDENTIFIER","time"],cv_list=None,top_cor=5):
     """
     Get the dataframe associated with this analysis
     
@@ -96,6 +96,7 @@ def apply_l2(known_all,unknown_all,name="cake",ignore_cols=["IDENTIFIER","time"]
     df_return_test.index = unknown_all.index
     df_return_test["IDENTIFIER"] = unknown_all["IDENTIFIER"]
 
+    all_cor = []
     for c in known_all.columns:
         try:
             if c in ["IDENTIFIER","time"]:
@@ -104,7 +105,20 @@ def apply_l2(known_all,unknown_all,name="cake",ignore_cols=["IDENTIFIER","time"]
                 cor = spearmanr(known_all[c], known_all["time"])[0]
             except:
                 continue
-            
+            all_cor.append(cor)
+        except:
+            continue
+    min_cor = sorted(all_cor)[top_cor*-1]
+
+    for c in known_all.columns:
+        try:
+            if c in ["IDENTIFIER","time"]:
+                continue
+            try:
+                cor = spearmanr(known_all[c], known_all["time"])[0]
+            except:
+                continue
+
             if abs(cor) < min_cor:
                 continue
 

@@ -113,25 +113,29 @@ def replace_non_ascii(ident):
 		except TypeError:
 			return "Non-ident"
 
-def main(infilen="datasets/retmetfeatures_new.csv"):
+def main(infilen="datasets/Degradation_6_with_smiles_feats.csv"):
 	global adds
 	global n_all
 
 	infile = pd.read_csv(infilen)	
 	infile.fillna(0.0,inplace=True)
 	try:
-		keep_f = [x.strip() for x in open("features/selected_features.txt", encoding="utf-8").readlines()]
-		infile = infile[keep_f]
+		keep_f = [x.strip() for x in open("features/selected_features_v2.txt", encoding="utf-8").readlines()]
+		print(list(infile.columns))
+		keep_f.extend(["time","IDENTIFIER","system"])
+		infile = infile.loc[:,keep_f]
 		keep_f_features_only = [f for f in keep_f if f not in ["time","IDENTIFIER","system"]]
 	except IOError:
 		infile,keep_f = sel_features(infile)
-		outfile = open("features/selected_features.txt","w")
+		outfile = open("features/selected_features_v2.txt","w")
 		outfile.write("\n".join(list(keep_f)))
 		keep_f_features_only = [f for f in keep_f if f not in ["time","IDENTIFIER","system"]]
 
 	scaler = StandardScaler()
-	infile[keep_f_features_only] = scaler.fit_transform(infile[keep_f_features_only])
+	print(list(infile.columns))
+	print(infile["IDENTIFIER"])
 	infile["IDENTIFIER"] = infile["IDENTIFIER"].apply(replace_non_ascii)
+	infile[keep_f_features_only] = scaler.fit_transform(infile[keep_f_features_only])
 	#infile["IDENTIFIER"] = ["mol_"+str(i) for i in range(len(infile["IDENTIFIER"]))]
 
 	sets = get_sets(infile)

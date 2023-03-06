@@ -189,11 +189,14 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
     if type(reference_infile) == str: 
         ref_infile = pd.read_csv(reference_infile)
     else:
-        ref_infile = get_feats("".join([l.decode() for l in reference_infile]))
+        try:
+            ref_infile = get_feats("".join([l for l in reference_infile])) #.decode()
+        except TypeError:
+            ref_infile = get_feats("".join([l.decode() for l in reference_infile])) #
 
     
     ref_infile["IDENTIFIER"] = ref_infile["IDENTIFIER"].apply(replace_non_ascii)
-
+    ref_infile.to_csv("Degradation_6_with_smiles_feats.csv")
     # Make sure we have the correct data types
     dict_dtypes = dict(ref_infile.select_dtypes(include=['int']).apply(pd.to_numeric,downcast="integer").dtypes)
     float_dtypes = dict(ref_infile.select_dtypes(include=['float']).apply(pd.to_numeric,downcast="float").dtypes)
@@ -203,20 +206,24 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
         tot_preds = sum(1 for row in open(pred_infile,"r"))/ch_size
         p_infile = pd.read_csv(pred_infile,dtype=dict_dtypes,chunksize=ch_size)
     else:
-        p_infile = get_feats("".join([l.decode() for l in pred_infile]))
-
+        try:
+            p_infile = get_feats("".join([l for l in pred_infile])) #.decode()
+        except TypeError:
+            p_infile = get_feats("".join([l.decode() for l in pred_infile]))
+    
+    p_infile.to_csv("Degradation_6_with_smiles_feats.csv")
     infile = pd.read_csv("datasets/input_for_scaler.csv",low_memory=False)	
     infile.fillna(0.0,inplace=True)
 
     try:
-        keep_f = [x.strip() for x in open("features/selected_features_v2.txt", encoding="utf-8").readlines()]
+        keep_f = [x.strip() for x in open("features/selected_features_v3.txt", encoding="utf-8").readlines()]
         infile = infile[keep_f]
         keep_f_features_only = [f for f in keep_f if f not in ["time","IDENTIFIER","system"]]
         infile[keep_f_features_only] = infile[keep_f_features_only].applymap(lambda x: np.nan if isinstance(x, str) else x)
         infile.fillna(0.0,inplace=True)
     except IOError:
         infile,keep_f = sel_features(infile)
-        outfile = open("features/selected_features_v2.txt","w")
+        outfile = open("features/selected_features_v3.txt","w")
         outfile.write("\n".join(list(keep_f)))
         
         keep_f_features_only = [f for f in keep_f if f not in ["time","IDENTIFIER","system"]]        
@@ -233,8 +240,8 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
     scaler = StandardScaler()
     
     infile.fillna(0.0,inplace=True)
-
-    scaler = load(open('scaler.pkl', 'rb'))
+    scaler.fit_transform(ref_infile[keep_f_withoutid])
+    #scaler = load(open('scaler.pkl', 'rb'))
 
     ref_infile[keep_f_withoutid] = scaler.transform(ref_infile[keep_f_withoutid])
 
@@ -249,6 +256,7 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
 
     train = train.replace([np.inf, -np.inf], np.nan)
     train.fillna(0.0,inplace=True)
+    train.to_csv("Degradation_6_with_smiles_feats.csv")
 
     # Do layer 1 outside of the chunking
     keep_f_all = ["IDENTIFIER","time"]
@@ -278,11 +286,11 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
 
     preds_diff_l1 = (preds_l1_test.loc[:,preds_l1_test.columns!="IDENTIFIER"]-preds_l1_test.loc[:,preds_l1_test.columns!="IDENTIFIER"].min())/(preds_l1_test.loc[:,preds_l1_test.columns!="IDENTIFIER"].max()-preds_l1_test.loc[:,preds_l1_test.columns!="IDENTIFIER"].min())
     preds_diff_l1.fillna(0.0,inplace=True)
-    preds_diff_l1 = preds_diff_l1.loc[:,[c for c in preds_diff_l1.columns if c.endswith("SVM")]]
+    preds_diff_l1 = preds_diff_l1.loc[:,[c for c in preds_diff_l1.columns if c.endswith("xgb")]]
     dist_l1 = preds_diff_l1.apply(calc_overlap_compounds)
 
     dist_l1 = dist_l1.sort_values()
-    plot_setups = dist_l1[:5]
+    plot_setups = dist_l1 #[:5]
 
     print("Applying Layer 2...")
 
@@ -318,7 +326,7 @@ def make_preds(reference_infile="train_set_lpp2.csv",pred_infile="lmfeatures.csv
             else:
                 print("Can not remove %s file. You need to remove it manually." % fn)
 
-    return preds_l3_train, preds_l3_test, plot_setups, preds_l1_test, coefs
+    return preds_l3_train, preds_l3_test, plot_setups, preds_l1_test, coefs, test
 
 if __name__ == "__main__":
     make_preds(reference_infile="datasets/aicheler_data_features.csv",pred_infile="datasets/lm_features.csv")

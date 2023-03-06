@@ -171,7 +171,6 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
 
         if "\t" in mol:
             mol = mol.strip().split("\t")
-            print(mol)
         else:
             mol = mol.strip().split(",")
 
@@ -190,9 +189,12 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
             # TODO write error msg
             continue
         if mol_str not in lib_identifiers:
-            try: fdict = getf(m)
+            try: fdict = getf(m,progs=["rdkit","mordred"])
             except: continue
-            lipid_dict[identifier] = fdict["rdkit"]
+            lipid_dict[identifier] = {}
+            for prog in fdict.keys():
+                lipid_dict[identifier].update(fdict[prog])
+
             if len(features) == 0: features = list(set(lipid_dict[identifier].keys()))
         else:
             library_analyze_smiles.append([identifier,mol_str])
@@ -236,7 +238,6 @@ def get_features(infile_name="data/LMSDFDownload28Jun15FinalAll.sdf",
     outfile.close()
 
     if return_df:
-        
         return pd.DataFrame(lipid_dict).T
 
 

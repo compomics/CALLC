@@ -33,6 +33,8 @@ import pandas as pd
 import time
 #from obabel_wrapper_batch import get_feat
 
+from tqdm import tqdm
+
 def rdkit_descriptors(mol):
     """
     Function to get (all) chemical descriptors from RDKit
@@ -128,7 +130,7 @@ def call_rcdk(infile_name="temp/tempKnownsl2.csv",outfile_name="temp/tempUnknown
     """
     # Write enumerate(ID)+smiles to file -> read file -> execute CDK -> read file here -> todict() -> return
     cmd = "Rscript CDK_run.R %s %s" % (infile_name,outfile_name)
-    
+    print(cmd)
     p = Popen(cmd, stdout=PIPE,stderr=PIPE,shell=True)
     out, err = p.communicate()
 
@@ -218,10 +220,7 @@ def mordred_descriptors(mol):
     """
     calc = Calculator(descriptors, ignore_3D=True)
     if type(mol) == list:
-        print("here")
-        print(mol)
         df = calc.pandas(mol,nproc=1).T
-        print("here2")
         return df.to_dict()
     else:
         df = calc.pandas([mol],nproc=1).T
@@ -283,7 +282,8 @@ def getf(mol, progs=["rdkit"]):
     if "rdkit" in progs:
         if type(mol) == list:
             ret_dict["rdkit"] = {}
-            for i,m in enumerate(mol):
+            print("Calculating rdkit:")
+            for i,m in tqdm(enumerate(mol)):
                 ret_dict["rdkit"][i] = rdkit_descriptors(m)
         else:
             ret_dict["rdkit"] = rdkit_descriptors(mol)
